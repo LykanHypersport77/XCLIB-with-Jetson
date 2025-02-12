@@ -5,10 +5,10 @@
 #include <tiffio.h>
 #include "xcliball.h"
 
-#define SAVE_PATH "/home/jetson/captured_frames/"
-#define NUM_FRAMES 100
-#define FRAME_WIDTH 640
-#define FRAME_HEIGHT 480
+#define SAVE_PATH "/usr/downloads/test/captured_frames/"
+#define NUM_FRAMES 1000
+#define FRAME_WIDTH 1944
+#define FRAME_HEIGHT 1472
 #define NUM_BUFFERS 3
 
 unsigned short **frame_buffers;
