@@ -10,7 +10,7 @@ import argparse
 
 # --- Parse Command Line Arguments ---
 parser = argparse.ArgumentParser(description="Jetson Ground Test GUI for Raptor Hawk")
-parser.add_argument('--fmt', type=str, default="MiddleThird_12bit.fmt", help="Format file to lock the ROI")
+parser.add_argument('--fmt', type=str, default="pinhole.fmt", help="Format file to lock the ROI")
 args = parser.parse_args()
 
 # --- Path to XCLIB ---
