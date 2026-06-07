@@ -31,14 +31,16 @@ xclib.pxd_saveTiff.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctyp
 xclib.pxd_mesgFault.argtypes = [ctypes.c_int]
 xclib.pxd_serialWrite.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
 
-# --- Hardware Functions ---
+# --- Hardware Serial Functions ---
 def send_raptor_command(unit, hex_list):
+    """Calculates XOR checksum and sends byte array over CameraLink serial."""
     chk_sum = 0
     for b in hex_list:
         chk_sum ^= b
     hex_list.append(chk_sum)
     cmd_bytes = bytes(hex_list)
     xclib.pxd_serialWrite(unit, 1, cmd_bytes, len(cmd_bytes))
+    # Note: A robust system would also use pxd_serialRead to confirm an "ACK" from the camera
 
 def enable_auto_exposure(unit):
     print("Enabling Auto-Exposure (ALC)...")
@@ -60,10 +62,9 @@ class GroundTestApp:
             self.root.destroy()
             return
             
-        enable_auto_exposure(UNIT)
         xclib.pxd_imageZdim(UNIT, 1)
         
-        # UI Elements
+        # --- UI: Top Bar (Capture) ---
         self.top_frame = tk.Frame(self.root, pady=10)
         self.top_frame.pack()
         
@@ -73,13 +74,71 @@ class GroundTestApp:
         self.status_lbl = tk.Label(self.top_frame, text="Ready", font=("Arial", 12))
         self.status_lbl.pack(side=tk.LEFT, padx=20)
 
-        # Image Canvas (defaults to a black placeholder)
+        # --- UI: Hardware Controls ---
+        self.ctrl_frame = tk.LabelFrame(self.root, text="Camera Hardware Controls", padx=10, pady=10)
+        self.ctrl_frame.pack(fill="x", padx=10)
+
+        # Exposure Slider
+        self.exp_var = tk.IntVar(value=10) # Default 10ms
+        self.exp_slider = tk.Scale(self.ctrl_frame, from_=1, to=1000, orient="horizontal", label="Exposure Time (ms)", variable=self.exp_var, length=250)
+        self.exp_slider.bind("<ButtonRelease-1>", self.update_exposure)
+        self.exp_slider.grid(row=0, column=0, padx=10)
+
+        # Digital Gain Slider
+        self.dgain_var = tk.IntVar(value=0)
+        self.dgain_slider = tk.Scale(self.ctrl_frame, from_=0, to=4095, orient="horizontal", label="Digital Gain (Raw)", variable=self.dgain_var, length=250)
+        self.dgain_slider.bind("<ButtonRelease-1>", self.update_digital_gain)
+        self.dgain_slider.grid(row=0, column=1, padx=10)
+
+        # On-Chip Gain Slider (Usually a small multiplier or index, e.g., 1x to 10x)
+        self.again_var = tk.IntVar(value=1)
+        self.again_slider = tk.Scale(self.ctrl_frame, from_=1, to=10, orient="horizontal", label="On-Chip Gain", variable=self.again_var, length=250)
+        self.again_slider.bind("<ButtonRelease-1>", self.update_onchip_gain)
+        self.again_slider.grid(row=0, column=2, padx=10)
+
+        # --- UI: Image Preview ---
         self.canvas = tk.Label(self.root, text="No Image Captured", bg="black", fg="white", width=100, height=20)
         self.canvas.pack(padx=10, pady=10)
 
-        # Ensure hardware safely closes if user clicks the window's "X"
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
+    # --- Hardware Control Callbacks ---
+    def update_exposure(self, event=None):
+        val_ms = self.exp_var.get()
+        print(f"Setting Exposure to: {val_ms}ms")
+        
+        # Example math: Convert ms to microseconds for the camera register
+        val_us = val_ms * 1000
+        byte1 = (val_us >> 16) & 0xFF
+        byte2 = (val_us >> 8) & 0xFF
+        byte3 = val_us & 0xFF
+        
+        # TODO: Replace 0x53 and 0xXX with the exact Raptor Hawk Exposure Write OpCode
+        cmd = [0x53, 0xXX, byte1, byte2, byte3] 
+        # send_raptor_command(UNIT, cmd) 
+
+    def update_digital_gain(self, event=None):
+        val = self.dgain_var.get()
+        print(f"Setting Digital Gain to: {val}")
+        
+        byte1 = (val >> 8) & 0xFF
+        byte2 = val & 0xFF
+        
+        # TODO: Replace with exact Digital Gain OpCode
+        cmd = [0x53, 0xXX, byte1, byte2]
+        # send_raptor_command(UNIT, cmd)
+
+    def update_onchip_gain(self, event=None):
+        val = self.again_var.get()
+        print(f"Setting On-Chip Gain to: {val}")
+        
+        byte1 = val & 0xFF
+        
+        # TODO: Replace with exact Analog Gain OpCode
+        cmd = [0x53, 0xXX, byte1]
+        # send_raptor_command(UNIT, cmd)
+
+    # --- Capture & Rendering ---
     def snap_image(self):
         self.status_lbl.config(text="Capturing...", fg="black")
         self.root.update()
@@ -99,7 +158,7 @@ class GroundTestApp:
             self.status_lbl.config(text="Save Error!", fg="red")
             return
             
-        os.sync() # Flush to disk safely
+        os.sync() # Flush to disk safely on Jetson/Linux
         
         # 3. Load and display preview
         self.display_image(tif_path)
@@ -107,26 +166,18 @@ class GroundTestApp:
 
     def display_image(self, filepath):
         try:
-            # Load the 16-bit packed TIFF
             img = Image.open(filepath)
-            
-            # Convert to numpy array to handle the 12-bit math
             img_arr = np.array(img, dtype=np.uint16)
             
-            # Compress 12-bit (4095 max) down to 8-bit (255 max) for standard screen viewing
+            # Compress 12-bit down to 8-bit for Tkinter display
             img_arr = (img_arr / 4095.0 * 255).astype(np.uint8)
-            
-            # Convert back to Pillow Image
             img_8bit = Image.fromarray(img_arr)
             
-            # Resize for the GUI (Scaling up the middle third so it's easy to see)
-            # Assuming the cropped width is 1920, let's fit it to a 1000px wide window
             aspect_ratio = img_8bit.height / img_8bit.width
             new_width = 1000
             new_height = int(new_width * aspect_ratio)
             img_resized = img_8bit.resize((new_width, new_height), Image.Resampling.BILINEAR)
 
-            # Update the Tkinter Label
             self.tk_img = ImageTk.PhotoImage(img_resized)
             self.canvas.config(image=self.tk_img, text="", width=new_width, height=new_height)
             
@@ -145,7 +196,6 @@ def main():
     os.makedirs(SAVE_DIR, exist_ok=True)
     fmt_path = os.path.join(os.path.expanduser("~/Downloads/xclib"), args.fmt)
 
-    # Boot the UI
     root = tk.Tk()
     app = GroundTestApp(root, SAVE_DIR, fmt_path)
     root.mainloop()
