@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 import matplotlib.pyplot as plt
 import ctypes
+from scipy.signal import savgol_filter
 
 # --- Calibration Constants ---
 NM_PER_PIXEL = 0.8
@@ -81,27 +82,47 @@ def get_true_endpoints(box):
     return true_x1, true_y1, true_x2, true_y2, ux, uy, fixed_length_pixels
 
 def extract_line_profile(box, img):
-    """Extracts the pixel intensities using the dynamically calculated endpoints."""
-    true_x1, true_y1, true_x2, true_y2, _, _, length = get_true_endpoints(box)
+    """Extracts and averages pixel intensities across the thickness of the dispersion."""
+    true_x1, true_y1, true_x2, true_y2, ux, uy, length = get_true_endpoints(box)
     if length == 0: return np.array([]), np.array([])
     
-    x_coords = np.linspace(true_x1, true_x2, int(length)).astype(int)
-    y_coords = np.linspace(true_y1, true_y2, int(length)).astype(int)
+    # The base 1D line coordinates
+    x_coords = np.linspace(true_x1, true_x2, int(length))
+    y_coords = np.linspace(true_y1, true_y2, int(length))
+    
+    # Calculate perpendicular vector to sample across the "width" of the streak
+    vx, vy = -uy, ux
+    thickness = box['thickness']
+    
+    # Create spatial offsets from the center line (e.g., -2 to +2 for a thickness of 5)
+    offsets = np.linspace(-thickness/2, thickness/2, thickness)
     
     h, w = img.shape[:2]
-    valid = (x_coords >= 0) & (x_coords < w) & (y_coords >= 0) & (y_coords < h)
-    x_coords, y_coords = x_coords[valid], y_coords[valid]
+    intensity_accumulator = np.zeros(int(length))
     
-    if len(x_coords) == 0: return np.array([]), np.array([])
+    # Sweep across the thickness and accumulate the pixel values
+    for offset in offsets:
+        # Shift the mathematical line perpendicularly
+        ox = np.round(x_coords + vx * offset).astype(int)
+        oy = np.round(y_coords + vy * offset).astype(int)
+        
+        # Safely clip coordinates to ensure they don't fall off the image edges
+        ox = np.clip(ox, 0, w - 1)
+        oy = np.clip(oy, 0, h - 1)
+        
+        intensity_accumulator += img[oy, ox]
+        
+    # Average the intensities across the thickness to kill the noise
+    averaged_intensities = intensity_accumulator / thickness
     
-    intensities = img[y_coords, x_coords]
     start_nm = box['start_nm']
     
-    # --- FLIPPED MATH ---
     # Subtracts the wavelength as it travels from x1 (left) to x2 (right)
-    wavelengths = start_nm - (np.arange(len(intensities)) * NM_PER_PIXEL)
+    wavelengths = start_nm - (np.arange(len(averaged_intensities)) * NM_PER_PIXEL)
     
-    return wavelengths, intensities
+    return wavelengths, averaged_intensities
+
+
 
 def on_mouse_click(event, x, y, flags, param):
     """Detects clicks near the blue dispersion lines."""
@@ -131,12 +152,25 @@ def on_mouse_click(event, x, y, flags, param):
                     print("Error: Selected range contains no data for this dispersion.")
                     break
                 
+                # --- APPLY SAVITZKY-GOLAY FILTER ---
+                # window_length: The number of pixels to look at at once (must be an odd number). 
+                # Higher = smoother, but too high will start to flatten peaks. 15 is a great starting point.
+                # polyorder: The degree of the polynomial fit (usually 2 or 3).
+                smoothed_ints = savgol_filter(filtered_ints, window_length=15, polyorder=3)
+                
                 plt.figure(figsize=(10, 5))
-                plt.plot(filtered_waves, filtered_ints, color='blue')
+                
+                # Plot the raw data as a faded background line
+                #plt.plot(filtered_waves, filtered_ints, color='blue', alpha=0.25, label='Raw Sensor Data')
+                
+                # Plot the new, smoothed data as a sharp, bold line
+                plt.plot(filtered_waves, smoothed_ints, color='blue', linewidth=2, label='Sensor Data')
+                
                 plt.title(f"Dispersion {box['id']} Spectrum")
                 plt.xlabel("Wavelength (nm)")
                 plt.ylabel("Intensity")
                 plt.xlim([min_nm, max_nm])
+                plt.legend()
                 plt.grid(True)
                 plt.show() 
                 break
