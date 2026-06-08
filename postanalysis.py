@@ -3,6 +3,7 @@ import numpy as np
 import tkinter as tk
 from tkinter import filedialog
 import matplotlib.pyplot as plt
+import ctypes
 
 # --- Calibration Constants ---
 NM_PER_PIXEL = 0.8
@@ -29,6 +30,11 @@ DISPERSIONS = [
 ]
 target_img = None
 
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    pass 
+
 def select_image(prompt):
     print(f"Waiting for user to select: {prompt}")
     path = filedialog.askopenfilename(
@@ -37,6 +43,22 @@ def select_image(prompt):
     )
     if not path: return None
     return cv2.imread(path, cv2.IMREAD_GRAYSCALE | cv2.IMREAD_ANYDEPTH)
+
+img = select_image("Select the hyperspectral image file")
+aspect_ratio = img.shape[0] / img.shape[1] # Height / Width
+
+# Set a safe width that fits easily on a 1080p screen
+display_width = 1200
+display_height = int(display_width * aspect_ratio)
+
+# Tell OpenCV to allow resizing, then force the locked aspect ratio
+cv2.namedWindow('Post Analysis', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('Post Analysis', display_width, display_height)
+
+cv2.imshow('Post Analysis', img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
 
 def get_true_endpoints(box):
     """Calculates the exact pixel endpoints, anchoring the start exactly at x1, y1."""
