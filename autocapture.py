@@ -2,48 +2,37 @@ import ctypes
 import time
 import datetime
 import os
-import sys
-import argparse
 
-# --- Parse Command Line Arguments ---
-parser = argparse.ArgumentParser(description="Capture full-res images from Raptor Hawk via EPIX PIXCI")
-parser.add_argument('--exp', type=float, default=2.0, help="Exposure time in milliseconds (default: 2.0)")
-parser.add_argument('--shots', type=int, default=5, help="Number of frames to capture (default: 5)")
-args = parser.parse_args()
+# ==========================================================
+# --- FLIGHT HARDWARE SETTINGS (EDIT THESE BEFORE LAUNCH) ---
+# ==========================================================
+FORMAT_FILE = "pinhole.fmt"
+EXPOSURE_MS = 40      # Exposure time in milliseconds
+DIGITAL_GAIN = 4608   # Raw digital gain (Min 256 = 1x Gain)
+ANALOG_GAIN = 180      # On-chip analog gain (0-240 counts)
+# ==========================================================
 
-# --- Path to the XCLIB shared library ---
 DLL_PATH = "/usr/local/xclib/lib/xclib_aarch64.so"
 try:
     xclib = ctypes.CDLL(DLL_PATH)
 except OSError:
-    raise SystemExit(f"Error: Could not load XCLIB at {DLL_PATH}. Ensure drivers are installed.")
+    raise SystemExit(f"Error: Could not load XCLIB at {DLL_PATH}. Ensure EPIX drivers are installed for aarch64.")
 
-# --- Constants ---
-UNIT, CHANNEL = 0, 1
-UNITSMAP = 1  # match Windows code
+UNIT, CHANNEL, UNITSMAP = 0, 1, 1
 
-# --- Define C-types function signatures ---
 xclib.pxd_PIXCIopen.argtypes = [ctypes.c_char_p] * 3
 xclib.pxd_PIXCIopen.restype = ctypes.c_int
-
 xclib.pxd_imageZdim.argtypes = [ctypes.c_int, ctypes.c_int]
-
 xclib.pxd_goSnap.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int]
-
 xclib.pxd_saveTiff.argtypes = [
     ctypes.c_int, ctypes.c_char_p,
     ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
     ctypes.c_int, ctypes.c_int, ctypes.c_void_p
 ]
-
 xclib.pxd_mesgFault.argtypes = [ctypes.c_int]
-
-# Serial Write Binding for Camera Link
 xclib.pxd_serialWrite.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
 xclib.pxd_serialWrite.restype = ctypes.c_int
 
-
-# --- Camera Link Serial Functions ---
 def send_raptor_command(unit, hex_list):
     """Calculates XOR checksum and sends hex array over Camera Link Serial."""
     chk_sum = 0
@@ -52,81 +41,60 @@ def send_raptor_command(unit, hex_list):
     
     hex_list.append(chk_sum)
     cmd_bytes = bytes(hex_list)
-    
-    # Port 1 is standard for EPIX CL Base serial communication
-    ret = xclib.pxd_serialWrite(unit, 1, cmd_bytes, len(cmd_bytes))
-    return ret
+    xclib.pxd_serialWrite(unit, 1, cmd_bytes, len(cmd_bytes))
+    time.sleep(0.05)
 
-def disable_auto_exposure(unit):
-    """Disables the camera's internal ALC (Auto Light Control) so manual exposure works."""
-    print("Disabling Auto-Exposure (ALC)...")
-    # Reg 0x00: Bit 1 = 0 disables auto gain (ALC)
-    cmd = [0x53, 0x00, 0x03, 0x01, 0x00, 0x00, 0x50]
-    send_raptor_command(unit, cmd)
-    time.sleep(0.1)
-
-def set_exposure_ms(unit, ms):
-    """Converts milliseconds to 74.25MHz clock counts and sends 5-byte exposure command."""
-    print(f"Setting Raptor exposure to {ms} ms...")
+def lock_hardware_settings(unit, exp_ms, dgain, again):
+    """Sends exact, hardcoded exposure and gain settings to the Raptor."""
+    print(f"Locking Hardware: Exposure={exp_ms}ms, Digital Gain={dgain}, Analog Gain={again}")
     
-    # 1 count = 13.468 nsecs
-    counts = int((ms * 1e-3) / 13.468e-9)
-    
-    # Split 40-bit value into 5 bytes
-    y0 = (counts >> 32) & 0xFF  # MSB
-    y1 = (counts >> 24) & 0xFF
-    y2 = (counts >> 16) & 0xFF
-    y3 = (counts >> 8) & 0xFF
-    y4 = counts & 0xFF          # LSB
-     
-    registers = [
-        (0xED, y0),
-        (0xEE, y1),
-        (0xEF, y2),
-        (0xF0, y3),
-        (0xF1, y4)
-    ]
-    
-    # Send the 5 commands sequentially
-    for reg, val in registers:
-        cmd = [0x53, 0x00, 0x03, 0x01, reg, val, 0x50]
-        send_raptor_command(unit, cmd)
-        time.sleep(0.05) # Give the Raptor micro time to process each byte
-        
-    print(f"Exposure set successfully.")
+    # 1. Disable Auto Exposure (ALC) - FORCE MANUAL MODE
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0x00, 0x00, 0x50])
 
+    # 2. Set Exposure (40-bit across 5 bytes)
+    exp_counts = int(exp_ms * 74250)
+    y0 = (exp_counts >> 32) & 0xFF
+    y1 = (exp_counts >> 24) & 0xFF
+    y2 = (exp_counts >> 16) & 0xFF
+    y3 = (exp_counts >> 8) & 0xFF
+    y4 = exp_counts & 0xFF
 
-# --- Main Execution ---
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xED, y0, 0x50])
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xEE, y1, 0x50])
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xEF, y2, 0x50])
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xF0, y3, 0x50])
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xF1, y4, 0x50]) 
+    
+    # 3. Set Digital Gain (16-bit across 2 bytes)
+    d1 = (dgain >> 8) & 0xFF
+    d2 = dgain & 0xFF
+    
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xC6, d1, 0x50])
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xC7, d2, 0x50]) 
+    
+    # 4. Set Analog Gain (Unlock Sequence + Set)
+    a1 = again & 0xFF
+    
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xE5, 0x35, 0x50]) 
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xE6, 0x14, 0x50]) 
+    send_raptor_command(unit, [0x53, 0x00, 0x03, 0x01, 0xE7, a1, 0x50])
+    
+    print("Hardware locked. Ready for capture.")
+
 def main():
-    # Save directory
     SAVE_DIR = os.path.expanduser("~/Downloads/xclib")
     os.makedirs(SAVE_DIR, exist_ok=True)
+    fmt_path = os.path.join(SAVE_DIR, FORMAT_FILE)
 
-    # Hardcoded .fmt path
-    fmt_path = os.path.join(SAVE_DIR, "Pinhole.fmt")
-
-    # Open the PIXCI board
     print(f"Opening PIXCI board with {fmt_path}...")
     if xclib.pxd_PIXCIopen(b"", b"", fmt_path.encode()) < 0:
         xclib.pxd_mesgFault(UNIT)
-        raise SystemExit("Could not open PIXCI board. Check if another process is using it.")
+        raise SystemExit(f"Could not open PIXCI board. Check if {FORMAT_FILE} exists and XCAP is closed.")
 
-    # --- Hardware Configuration ---
-    disable_auto_exposure(UNIT)
-    set_exposure_ms(UNIT, args.exp)
-
-    # Allocate buffer
+    lock_hardware_settings(UNIT, EXPOSURE_MS, DIGITAL_GAIN, ANALOG_GAIN)
     xclib.pxd_imageZdim(UNIT, 1)
- 
-    # Get frame dimensions
-    xclib.pxd_imageXdim.restype = ctypes.c_int
-    xclib.pxd_imageYdim.restype = ctypes.c_int
-    xdim = xclib.pxd_imageXdim(UNIT)
-    ydim = xclib.pxd_imageYdim(UNIT)
-    print(f"Frame dimensions: {xdim} x {ydim} (Full Resolution)")
 
-    # --- INFINITE CAPTURE LOOP ---
-    print("\nStarting infinite capture. Press Ctrl+C to stop...")
+    print("\nStarting INFINITE FLIGHT CAPTURE. Press Ctrl+C to stop...")
     frame_count = 0
     
     try:
@@ -138,7 +106,7 @@ def main():
                 continue
 
             frame_count += 1
-            base_name = datetime.datetime.now().strftime(f"capture_{args.exp}ms_%Y%m%d_%H%M%S")
+            base_name = datetime.datetime.now().strftime(f"capture_{EXPOSURE_MS}ms_%Y%m%d_%H%M%S")
             tif_name = f"{base_name}_{frame_count}.tif"
             tif_path = os.path.join(SAVE_DIR, tif_name)
 
@@ -152,21 +120,17 @@ def main():
                 xclib.pxd_mesgFault(UNITSMAP)
                 print(f"Failed to save TIFF {frame_count} at {tif_path}")
             else:
-                print(f"Successfully saved frame {frame_count}: {tif_name}")
+                print(f"Saved: {tif_name}")
+                os.sync() 
 
-                os.sync()  # Ensure data is flushed to disk before next capture (for abrupt power cuts during reentry)
-
-            # Lower this if you want to capture faster
-            time.sleep(1) 
+            time.sleep(0.1) 
 
     except KeyboardInterrupt:
-        # This catches the Ctrl+C command from the terminal
-        print(f"\nCapture manually stopped by user after {frame_count} frames.")
+        print(f"\nCapture safely terminated after {frame_count} frames.")
         
     finally:
-        # Clean up - This ALWAYS runs, even if you crash or press Ctrl+C
         xclib.pxd_PIXCIclose()
-        print("Camera disconnected and board closed safely.")
+        print("Hardware disengaged.")
 
 if __name__ == "__main__":
     main()
