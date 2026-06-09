@@ -12,6 +12,7 @@ TOTAL_NM_RANGE = 200.0
 WINDOW_NAME = "HSIS Spectral Viewer"
 MIN_WAVE_LIMIT = 525
 MAX_WAVE_LIMIT = 725
+INTEGRAL_SCALE = 1000000.0
 
 # --- Manual Dispersion Map ---
 DISPERSIONS = [
@@ -45,22 +46,6 @@ def select_image(prompt):
     if not path: return None
     return cv2.imread(path, cv2.IMREAD_GRAYSCALE | cv2.IMREAD_ANYDEPTH)
 
-img = select_image("Select the hyperspectral image file")
-aspect_ratio = img.shape[0] / img.shape[1] # Height / Width
-
-# Set a safe width that fits easily on a 1080p screen
-display_width = 1200
-display_height = int(display_width * aspect_ratio)
-
-# Tell OpenCV to allow resizing, then force the locked aspect ratio
-cv2.namedWindow('Post Analysis', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('Post Analysis', display_width, display_height)
-
-cv2.imshow('Post Analysis', img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
 def get_true_endpoints(box):
     """Calculates the exact pixel endpoints, anchoring the start exactly at x1, y1."""
     x1, y1, x2, y2 = box['x1'], box['y1'], box['x2'], box['y2']
@@ -80,6 +65,35 @@ def get_true_endpoints(box):
     true_y2 = y1 + (uy * fixed_length_pixels)
     
     return true_x1, true_y1, true_x2, true_y2, ux, uy, fixed_length_pixels
+
+def nm_to_bgr(nm):
+    """Approximates the visible spectrum color for a given wavelength in BGR format."""
+    r, g, b = 0.0, 0.0, 0.0
+    if nm < 440:
+        r = -(nm - 440) / (440 - 380)
+        b = 1.0
+    elif nm < 490:
+        g = (nm - 440) / (490 - 440)
+        b = 1.0
+    elif nm < 510:
+        g = 1.0
+        b = -(nm - 510) / (510 - 490)
+    elif nm < 580:
+        r = (nm - 510) / (580 - 510)
+        g = 1.0
+    elif nm < 645:
+        r = 1.0
+        g = -(nm - 645) / (645 - 580)
+    else:
+        r = 1.0
+
+    # Intensity scaling to prevent weird blowouts at the edges
+    factor = 1.0
+    if nm < 420: factor = 0.3 + 0.7*(nm - 380)/(420 - 380)
+    elif nm > 700: factor = 0.3 + 0.7*(750 - nm)/(750 - 700)
+    
+    # Return as an integer tuple for OpenCV (Blue, Green, Red)
+    return (int(b * factor * 255), int(g * factor * 255), int(r * factor * 255))
 
 def extract_line_profile(box, img):
     """Extracts and averages pixel intensities across the thickness of the dispersion."""
@@ -121,8 +135,6 @@ def extract_line_profile(box, img):
     wavelengths = start_nm - (np.arange(len(averaged_intensities)) * NM_PER_PIXEL)
     
     return wavelengths, averaged_intensities
-
-
 
 def on_mouse_click(event, x, y, flags, param):
     """Detects clicks near the blue dispersion lines."""
@@ -170,14 +182,15 @@ def on_mouse_click(event, x, y, flags, param):
                 plt.xlabel("Wavelength (nm)")
                 plt.ylabel("Intensity")
                 plt.xlim([min_nm, max_nm])
+                plt.ylim(bottom=0)
                 plt.legend()
                 plt.grid(True)
                 plt.show() 
                 break
 
 def reconstruct_image():
-    """Builds the 2D spatial map matching the exact dimensions of the raw image."""
-    print("Reconstructing spatial image...")
+    """Builds the 2D spatial map using spectral integration and draws the calculated laser ray."""
+    print("Reconstructing spatial image using spectral integration...")
     h, w = target_img.shape[:2]
     recon = np.zeros((h, w, 3), dtype=np.uint8)
     
@@ -185,34 +198,84 @@ def reconstruct_image():
         wavelengths, intensities = extract_line_profile(box, target_img)
         if len(intensities) == 0: continue
             
-        max_idx = np.argmax(intensities)
-        peak_intensity = intensities[max_idx]
-        peak_nm = wavelengths[max_idx]
+        # Apply filter to smooth the data
+        smoothed_ints = savgol_filter(intensities, window_length=15, polyorder=3)
         
-        if peak_intensity > 20000: 
+        # --- BACKGROUND SUBTRACTION ---
+        noise_floor = 5000 
+        true_signal = np.maximum(smoothed_ints - noise_floor, 0)
+        
+        # Find the true peak wavelength
+        if np.max(true_signal) > 1000: 
+            max_idx = np.argmax(true_signal)
+            peak_nm = wavelengths[max_idx]
+        else:
+            peak_nm = 0.0 
+        
+        # --- SPECTRAL INTEGRATION ---
+        green_mask = (wavelengths >= 500) & (wavelengths <= 560)
+        red_mask = (wavelengths >= 620) & (wavelengths <= 680)
+        
+        green_integral = np.sum(true_signal[green_mask]) if np.any(green_mask) else 0
+        red_integral = np.sum(true_signal[red_mask]) if np.any(red_mask) else 0
+        
+        g_color = int(min((green_integral / INTEGRAL_SCALE) * 255, 255))
+        r_color = int(min((red_integral / INTEGRAL_SCALE) * 255, 255))
+        
+        if g_color < 10 and r_color < 10:
+            continue
             
-            # --- Dynamic Brightness ---
-            brightness = int(min((peak_intensity / 50000.0) * 255, 255))
+        dot_color = (0, g_color, r_color) 
+        
+        # --- LOCATION MAPPING ---
+        tx1, ty1, tx2, ty2, ux, uy, _ = get_true_endpoints(box)
+        draw_x = int(tx1) 
+        draw_y = int(ty1)
+        
+        # --- NEW: DRAW THE FULL SPECTRUM RAY ---
+        # Draw the rainbow line mapping the entire 525-725nm physical space
+        chunk_length = np.hypot(tx2 - tx1, ty2 - ty1)
+        steps = max(2, int(chunk_length / 2))
+        
+        x_vals = np.linspace(tx1, tx2, steps)
+        y_vals = np.linspace(ty1, ty2, steps)
+        
+        # wave_vals goes from 725 down to 525
+        wave_vals = np.linspace(box['start_nm'], box['start_nm'] - TOTAL_NM_RANGE, steps)
+        
+        for k in range(steps - 1):
+            p1 = (int(x_vals[k]), int(y_vals[k]))
+            p2 = (int(x_vals[k+1]), int(y_vals[k+1]))
+            color = nm_to_bgr(wave_vals[k])
             
-            # Default to a grayscale dot based on intensity
-            color = (brightness, brightness, brightness) 
+            # Draw the track with thickness 2
+            cv2.line(recon, p1, p2, color, 2)
+
+        # Draw the mapped pinhole dot at the origin
+        cv2.circle(recon, (draw_x, draw_y), 6, dot_color, -1)
+        
+        if peak_nm > 0:
+            # Calculate where the laser actually hit along that rainbow line
+            peak_dist = (box['start_nm'] - peak_nm) / NM_PER_PIXEL
+            peak_x = int(tx1 + ux * peak_dist)
+            peak_y = int(ty1 + uy * peak_dist)
             
-            # OpenCV uses BGR (Blue, Green, Red) format
-            if 500 < peak_nm < 560: 
-                color = (0, brightness, 0) # Green
-            elif 620 < peak_nm < 680: 
-                color = (0, 0, brightness) # Red
-                
-            tx1, ty1, tx2, ty2, _, _, _ = get_true_endpoints(box)
-            draw_y = int((ty1 + ty2) / 2)
-            draw_x = int(w / 3) 
+            # Draw a bright white marker exactly where the peak strike occurred
+            cv2.circle(recon, (peak_x, peak_y), 4, (255, 255, 255), -1)
+            cv2.circle(recon, (peak_x, peak_y), 6, (0, 0, 0), 1) # Black outline for contrast
             
-            cv2.circle(recon, (draw_x, draw_y), 20, color, -1)
-            cv2.putText(recon, f"ID:{box['id']} - {peak_nm:.1f}nm", (draw_x + 35, draw_y + 5), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+            # Draw the label slightly below the line so it doesn't cover the colors
+            label_text = f"ID:{box['id']} ({draw_x}, {draw_y}) - {peak_nm:.1f}nm"
+            cv2.putText(recon, label_text, (draw_x + 15, draw_y + 15), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             
-    cv2.namedWindow("Reconstructed Map", cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
-    cv2.resizeWindow("Reconstructed Map", w, h)
+    # Apply Aspect Ratio Fix
+    aspect_ratio = h / w 
+    display_width = 1000
+    display_height = int(display_width * aspect_ratio)
+
+    cv2.namedWindow("Reconstructed Map", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("Reconstructed Map", display_width, display_height)
     cv2.imshow("Reconstructed Map", recon)
 
 def update_view(*args):
