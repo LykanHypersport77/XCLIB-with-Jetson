@@ -10,39 +10,63 @@ from scipy.signal import savgol_filter
 NM_PER_PIXEL = 0.8
 TOTAL_NM_RANGE = 200.0 
 WINDOW_NAME = "HSIS Spectral Viewer"
+GRID_WINDOW_NAME = "Hyperspectral reconstruction"
 MIN_WAVE_LIMIT = 525
 MAX_WAVE_LIMIT = 725
-INTEGRAL_SCALE = 1000000.0
+
+# Tweak this number to make the reconstructed grid blocks brighter or darker
+INTEGRAL_SCALE = 500000.0 
 
 # --- Manual Dispersion Map ---
 DISPERSIONS = [
-    {'id': 1, 'x1': 615, 'y1': 284, 'x2': 790, 'y2': 271, 'start_nm': 725, 'thickness': 5},
-    {'id': 2, 'x1': 595, 'y1': 298, 'x2': 734, 'y2': 289, 'start_nm': 725, 'thickness': 5},
-    {'id': 3, 'x1': 575, 'y1': 312, 'x2': 737, 'y2': 302, 'start_nm': 725, 'thickness': 5},
-    {'id': 4, 'x1': 555, 'y1': 322, 'x2': 698, 'y2': 314, 'start_nm': 725, 'thickness': 5},
-    {'id': 5, 'x1': 535, 'y1': 335, 'x2': 694, 'y2': 325, 'start_nm': 725, 'thickness': 5},
+    {'id': 1, 'x1': 725, 'y1': 102, 'x2': 911, 'y2': 76, 'start_nm': 725, 'thickness': 3},
+    {'id': 2, 'x1': 705, 'y1': 120, 'x2': 857, 'y2': 98, 'start_nm': 725, 'thickness': 3},
+    {'id': 3, 'x1': 685, 'y1': 132, 'x2': 828, 'y2': 117, 'start_nm': 725, 'thickness': 3},
+    {'id': 4, 'x1': 665, 'y1': 146, 'x2': 828, 'y2': 134, 'start_nm': 725, 'thickness': 3},
+    {'id': 5, 'x1': 645, 'y1': 162, 'x2': 811, 'y2': 152, 'start_nm': 725, 'thickness': 3},
+    {'id': 6, 'x1': 625, 'y1': 178, 'x2': 754, 'y2': 169, 'start_nm': 725, 'thickness': 3},
+    {'id': 7, 'x1': 605, 'y1': 191, 'x2': 712, 'y2': 184, 'start_nm': 725, 'thickness': 3},
+    {'id': 8, 'x1': 585, 'y1': 207, 'x2': 701, 'y2': 197, 'start_nm': 725, 'thickness': 3},
 
-    {'id': 10, 'x1': 520, 'y1': 694, 'x2': 624, 'y2': 691, 'start_nm': 725, 'thickness': 5},
-    {'id': 9, 'x1': 540, 'y1': 685, 'x2': 626, 'y2': 682, 'start_nm': 725, 'thickness': 5},
-    {'id': 8, 'x1': 560, 'y1': 676, 'x2': 643, 'y2': 672, 'start_nm': 725, 'thickness': 5},
-    {'id': 7, 'x1': 580, 'y1': 666, 'x2': 670, 'y2': 662, 'start_nm': 725, 'thickness': 5},
-    {'id': 6, 'x1': 600, 'y1': 652, 'x2': 765, 'y2': 645, 'start_nm': 725, 'thickness': 5},
+    {'id': 11, 'x1': 655, 'y1': 256, 'x2': 790, 'y2': 241, 'start_nm': 725, 'thickness': 3},
+    {'id': 12, 'x1': 635, 'y1': 270, 'x2': 790, 'y2': 256, 'start_nm': 725, 'thickness': 3},
+    {'id': 13, 'x1': 615, 'y1': 284, 'x2': 790, 'y2': 271, 'start_nm': 725, 'thickness': 3},
+    {'id': 14, 'x1': 595, 'y1': 298, 'x2': 734, 'y2': 289, 'start_nm': 725, 'thickness': 3},
+    {'id': 15, 'x1': 575, 'y1': 312, 'x2': 737, 'y2': 302, 'start_nm': 725, 'thickness': 3},
+    {'id': 16, 'x1': 555, 'y1': 322, 'x2': 698, 'y2': 314, 'start_nm': 725, 'thickness': 3},
+    {'id': 17, 'x1': 535, 'y1': 335, 'x2': 694, 'y2': 325, 'start_nm': 725, 'thickness': 3},
+    {'id': 18, 'x1': 515, 'y1': 350, 'x2': 690, 'y2': 340, 'start_nm': 725, 'thickness': 3},
 
-    {'id': 11, 'x1': 500, 'y1': 705, 'x2': 640, 'y2': 700, 'start_nm': 725, 'thickness': 5},
+    {'id': 41, 'x1': 520, 'y1': 694, 'x2': 624, 'y2': 691, 'start_nm': 725, 'thickness': 3},
+    {'id': 42, 'x1': 540, 'y1': 685, 'x2': 626, 'y2': 682, 'start_nm': 725, 'thickness': 3},
+    {'id': 43, 'x1': 560, 'y1': 676, 'x2': 643, 'y2': 672, 'start_nm': 725, 'thickness': 3},
+    {'id': 44, 'x1': 580, 'y1': 666, 'x2': 670, 'y2': 662, 'start_nm': 725, 'thickness': 3},
+    {'id': 45, 'x1': 600, 'y1': 652, 'x2': 765, 'y2': 645, 'start_nm': 725, 'thickness': 3},
+    {'id': 46, 'x1': 500, 'y1': 705, 'x2': 640, 'y2': 700, 'start_nm': 725, 'thickness': 3},
 ]
 target_img = None
+target_img_8u = None # Added a cached 8-bit version of the image
 
+# Defeat Windows Display Scaling
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
 except Exception:
     pass 
 
 def select_image(prompt):
+    """Opens a Windows file dialog securely and uniquely."""
     print(f"Waiting for user to select: {prompt}")
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes('-topmost', True)
+    
     path = filedialog.askopenfilename(
         title=prompt,
         filetypes=[("Image Files", "*.tif;*.tiff;*.png;*.jpg"), ("All Files", "*.*")]
     )
+    
+    root.destroy()
+    
     if not path: return None
     return cv2.imread(path, cv2.IMREAD_GRAYSCALE | cv2.IMREAD_ANYDEPTH)
 
@@ -66,72 +90,30 @@ def get_true_endpoints(box):
     
     return true_x1, true_y1, true_x2, true_y2, ux, uy, fixed_length_pixels
 
-def nm_to_bgr(nm):
-    """Approximates the visible spectrum color for a given wavelength in BGR format."""
-    r, g, b = 0.0, 0.0, 0.0
-    if nm < 440:
-        r = -(nm - 440) / (440 - 380)
-        b = 1.0
-    elif nm < 490:
-        g = (nm - 440) / (490 - 440)
-        b = 1.0
-    elif nm < 510:
-        g = 1.0
-        b = -(nm - 510) / (510 - 490)
-    elif nm < 580:
-        r = (nm - 510) / (580 - 510)
-        g = 1.0
-    elif nm < 645:
-        r = 1.0
-        g = -(nm - 645) / (645 - 580)
-    else:
-        r = 1.0
-
-    # Intensity scaling to prevent weird blowouts at the edges
-    factor = 1.0
-    if nm < 420: factor = 0.3 + 0.7*(nm - 380)/(420 - 380)
-    elif nm > 700: factor = 0.3 + 0.7*(750 - nm)/(750 - 700)
-    
-    # Return as an integer tuple for OpenCV (Blue, Green, Red)
-    return (int(b * factor * 255), int(g * factor * 255), int(r * factor * 255))
-
 def extract_line_profile(box, img):
     """Extracts and averages pixel intensities across the thickness of the dispersion."""
     true_x1, true_y1, true_x2, true_y2, ux, uy, length = get_true_endpoints(box)
     if length == 0: return np.array([]), np.array([])
     
-    # The base 1D line coordinates
     x_coords = np.linspace(true_x1, true_x2, int(length))
     y_coords = np.linspace(true_y1, true_y2, int(length))
     
-    # Calculate perpendicular vector to sample across the "width" of the streak
     vx, vy = -uy, ux
     thickness = box['thickness']
-    
-    # Create spatial offsets from the center line (e.g., -2 to +2 for a thickness of 5)
     offsets = np.linspace(-thickness/2, thickness/2, thickness)
     
     h, w = img.shape[:2]
     intensity_accumulator = np.zeros(int(length))
     
-    # Sweep across the thickness and accumulate the pixel values
     for offset in offsets:
-        # Shift the mathematical line perpendicularly
         ox = np.round(x_coords + vx * offset).astype(int)
         oy = np.round(y_coords + vy * offset).astype(int)
-        
-        # Safely clip coordinates to ensure they don't fall off the image edges
         ox = np.clip(ox, 0, w - 1)
         oy = np.clip(oy, 0, h - 1)
-        
         intensity_accumulator += img[oy, ox]
         
-    # Average the intensities across the thickness to kill the noise
     averaged_intensities = intensity_accumulator / thickness
-    
     start_nm = box['start_nm']
-    
-    # Subtracts the wavelength as it travels from x1 (left) to x2 (right)
     wavelengths = start_nm - (np.arange(len(averaged_intensities)) * NM_PER_PIXEL)
     
     return wavelengths, averaged_intensities
@@ -144,7 +126,6 @@ def on_mouse_click(event, x, y, flags, param):
 
         for box in DISPERSIONS:
             tx1, ty1, tx2, ty2, _, _, _ = get_true_endpoints(box)
-            
             min_x, max_x = min(tx1, tx2), max(tx1, tx2)
             
             click_tolerance = 15 
@@ -155,7 +136,6 @@ def on_mouse_click(event, x, y, flags, param):
                 print(f"Plotting Graph for Dispersion ID: {box['id']} ({min_nm}nm - {max_nm}nm)")
                 
                 wavelengths, intensities = extract_line_profile(box, target_img)
-                
                 valid_mask = (wavelengths >= min_nm) & (wavelengths <= max_nm)
                 filtered_waves = wavelengths[valid_mask]
                 filtered_ints = intensities[valid_mask]
@@ -164,20 +144,10 @@ def on_mouse_click(event, x, y, flags, param):
                     print("Error: Selected range contains no data for this dispersion.")
                     break
                 
-                # --- APPLY SAVITZKY-GOLAY FILTER ---
-                # window_length: The number of pixels to look at at once (must be an odd number). 
-                # Higher = smoother, but too high will start to flatten peaks. 15 is a great starting point.
-                # polyorder: The degree of the polynomial fit (usually 2 or 3).
                 smoothed_ints = savgol_filter(filtered_ints, window_length=15, polyorder=3)
                 
                 plt.figure(figsize=(10, 5))
-                
-                # Plot the raw data as a faded background line
-                #plt.plot(filtered_waves, filtered_ints, color='blue', alpha=0.25, label='Raw Sensor Data')
-                
-                # Plot the new, smoothed data as a sharp, bold line
                 plt.plot(filtered_waves, smoothed_ints, color='blue', linewidth=2, label='Sensor Data')
-                
                 plt.title(f"Dispersion {box['id']} Spectrum")
                 plt.xlabel("Wavelength (nm)")
                 plt.ylabel("Intensity")
@@ -188,95 +158,137 @@ def on_mouse_click(event, x, y, flags, param):
                 plt.show() 
                 break
 
-def reconstruct_image():
-    """Builds the 2D spatial map using spectral integration and draws the calculated laser ray."""
-    print("Reconstructing spatial image using spectral integration...")
-    h, w = target_img.shape[:2]
-    recon = np.zeros((h, w, 3), dtype=np.uint8)
+def draw_grid_canvas(*args):
+    """Generates the grid, applies spacing, and auto-scales the window."""
     
-    for i, box in enumerate(DISPERSIONS):
-        wavelengths, intensities = extract_line_profile(box, target_img)
-        if len(intensities) == 0: continue
-            
-        # Apply filter to smooth the data
-        smoothed_ints = savgol_filter(intensities, window_length=15, polyorder=3)
-        
-        # --- BACKGROUND SUBTRACTION ---
-        noise_floor = 5000 
-        true_signal = np.maximum(smoothed_ints - noise_floor, 0)
-        
-        # Find the true peak wavelength
-        if np.max(true_signal) > 1000: 
-            max_idx = np.argmax(true_signal)
-            peak_nm = wavelengths[max_idx]
-        else:
-            peak_nm = 0.0 
-        
-        # --- SPECTRAL INTEGRATION ---
-        green_mask = (wavelengths >= 500) & (wavelengths <= 560)
-        red_mask = (wavelengths >= 620) & (wavelengths <= 680)
-        
-        green_integral = np.sum(true_signal[green_mask]) if np.any(green_mask) else 0
-        red_integral = np.sum(true_signal[red_mask]) if np.any(red_mask) else 0
-        
-        g_color = int(min((green_integral / INTEGRAL_SCALE) * 255, 255))
-        r_color = int(min((red_integral / INTEGRAL_SCALE) * 255, 255))
-        
-        if g_color < 10 and r_color < 10:
-            continue
-            
-        dot_color = (0, g_color, r_color) 
-        
-        # --- LOCATION MAPPING ---
-        tx1, ty1, tx2, ty2, ux, uy, _ = get_true_endpoints(box)
-        draw_x = int(tx1) 
-        draw_y = int(ty1)
-        
-        # --- NEW: DRAW THE FULL SPECTRUM RAY ---
-        # Draw the rainbow line mapping the entire 525-725nm physical space
-        chunk_length = np.hypot(tx2 - tx1, ty2 - ty1)
-        steps = max(2, int(chunk_length / 2))
-        
-        x_vals = np.linspace(tx1, tx2, steps)
-        y_vals = np.linspace(ty1, ty2, steps)
-        
-        # wave_vals goes from 725 down to 525
-        wave_vals = np.linspace(box['start_nm'], box['start_nm'] - TOTAL_NM_RANGE, steps)
-        
-        for k in range(steps - 1):
-            p1 = (int(x_vals[k]), int(y_vals[k]))
-            p2 = (int(x_vals[k+1]), int(y_vals[k+1]))
-            color = nm_to_bgr(wave_vals[k])
-            
-            # Draw the track with thickness 2
-            cv2.line(recon, p1, p2, color, 2)
+    TOTAL_ROWS = 8
+    TOTAL_COLS = 10
+    CELL_W = int(TOTAL_NM_RANGE / NM_PER_PIXEL) 
+    CELL_H = 15 
 
-        # Draw the mapped pinhole dot at the origin
-        cv2.circle(recon, (draw_x, draw_y), 6, dot_color, -1)
+    PAD_X = 20 
+    PAD_Y = 35 
+    # ==========================================
+    
+    # ==========================================
+    # STEP 1: VECTOR CROP (TIGHT GRID)
+    # ==========================================
+    tight_grid = np.zeros((100 * CELL_H, CELL_W), dtype=np.uint8)
+    
+    min_nm = cv2.getTrackbarPos("Min(nm)", GRID_WINDOW_NAME)
+    max_nm = cv2.getTrackbarPos("Max(nm)", GRID_WINDOW_NAME)
+    
+    if min_nm >= max_nm:
+        cv2.setTrackbarPos("Min(nm)", GRID_WINDOW_NAME, max_nm - 1)
+        min_nm = max_nm - 1
         
-        if peak_nm > 0:
-            # Calculate where the laser actually hit along that rainbow line
-            peak_dist = (box['start_nm'] - peak_nm) / NM_PER_PIXEL
-            peak_x = int(tx1 + ux * peak_dist)
-            peak_y = int(ty1 + uy * peak_dist)
+    valid_ids = [box['id'] for box in DISPERSIONS]
+    
+    for box in DISPERSIONS:
+        tight_y = (box['id'] - 1) * CELL_H
+        
+        tx1, ty1, tx2, ty2, ux, uy, length = get_true_endpoints(box)
+        if length == 0: continue
             
-            # Draw a bright white marker exactly where the peak strike occurred
-            cv2.circle(recon, (peak_x, peak_y), 4, (255, 255, 255), -1)
-            cv2.circle(recon, (peak_x, peak_y), 6, (0, 0, 0), 1) # Black outline for contrast
+        start_px = int(max(0, (box['start_nm'] - max_nm) / NM_PER_PIXEL))
+        end_px = int(min(length, (box['start_nm'] - min_nm) / NM_PER_PIXEL))
+        
+        if start_px >= end_px: continue
             
-            # Draw the label slightly below the line so it doesn't cover the colors
-            label_text = f"ID:{box['id']} ({draw_x}, {draw_y}) - {peak_nm:.1f}nm"
-            cv2.putText(recon, label_text, (draw_x + 15, draw_y + 15), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        thickness = box['thickness']
+        num_pixels = end_px - start_px
+        
+        base_x = tx1 + ux * start_px
+        base_y = ty1 + uy * start_px
+        
+        x_coords = base_x + ux * np.arange(num_pixels)
+        y_coords = base_y + uy * np.arange(num_pixels)
+        
+        vx, vy = -uy, ux
+        offsets = np.linspace(-thickness/2, thickness/2, thickness)
+        
+        slice_canvas = np.zeros((thickness, CELL_W), dtype=np.uint8)
+        h, w = target_img_8u.shape[:2]
+        
+        for r, offset in enumerate(offsets):
+            ox = np.round(x_coords + vx * offset).astype(int)
+            oy = np.round(y_coords + vy * offset).astype(int)
             
-    # Apply Aspect Ratio Fix
-    aspect_ratio = h / w 
-    display_width = 1000
-    display_height = int(display_width * aspect_ratio)
+            ox = np.clip(ox, 0, w - 1)
+            oy = np.clip(oy, 0, h - 1)
+            
+            slice_canvas[r, start_px:end_px] = target_img_8u[oy, ox]
 
-    cv2.namedWindow("Reconstructed Map", cv2.WINDOW_NORMAL)
-    cv2.resizeWindow("Reconstructed Map", display_width, display_height)
-    cv2.imshow("Reconstructed Map", recon)
+        mask = np.zeros((thickness, CELL_W), dtype=np.uint8)
+        mask[:, start_px:end_px] = 255
+        filtered_slice = cv2.bitwise_and(slice_canvas, mask)
+
+        draw_y_start = tight_y + (CELL_H - thickness) // 2
+        tight_grid[draw_y_start:draw_y_start + thickness, 0:CELL_W] = filtered_slice
+
+    tight_grid_color = cv2.cvtColor(tight_grid, cv2.COLOR_GRAY2BGR)
+
+    # ==========================================
+    # STEP 2: THE SPACING LAYOUT ENGINE
+    # ==========================================
+    padded_w = (TOTAL_COLS * CELL_W) + ((TOTAL_COLS + 1) * PAD_X)
+    padded_h = (TOTAL_ROWS * CELL_H) + ((TOTAL_ROWS + 1) * PAD_Y)
+    padded_grid = np.zeros((padded_h, padded_w, 3), dtype=np.uint8)
+
+    for r in range(TOTAL_ROWS):
+        for c in range(TOTAL_COLS):
+            box_id = (r * TOTAL_COLS) + ((TOTAL_COLS - 1) - c) + 1
+            
+            tight_y = (box_id - 1) * CELL_H
+            cell_data = tight_grid_color[tight_y:tight_y + CELL_H, 0:CELL_W]
+            
+            paste_x = PAD_X + c * (CELL_W + PAD_X)
+            paste_y = PAD_Y + r * (CELL_H + PAD_Y)
+            padded_grid[paste_y:paste_y + CELL_H, paste_x:paste_x + CELL_W] = cell_data
+            
+            if box_id in valid_ids:
+                cv2.rectangle(padded_grid, (paste_x, paste_y), (paste_x + CELL_W, paste_y + CELL_H), (60, 60, 60), 1)
+                cv2.putText(padded_grid, str(box_id), (paste_x + 5, paste_y + 12), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (150, 150, 150), 1)
+
+    # Automatically size the window to perfectly match the padded grid!
+    aspect = padded_grid.shape[0] / padded_grid.shape[1]
+    cv2.resizeWindow(GRID_WINDOW_NAME, 1400, int(1400 * aspect))
+    cv2.imshow(GRID_WINDOW_NAME, padded_grid)
+
+
+def reconstruct_grid():
+    """Launches the window, sizes it correctly first, then hooks up the live UI sliders."""
+    print(f"Launching Live Visual Grid: {GRID_WINDOW_NAME}...")
+    
+    # 1. Create the window
+    cv2.namedWindow(GRID_WINDOW_NAME, cv2.WINDOW_NORMAL)
+    
+    # 2. Force the window to be large IMMEDIATELY, before adding sliders!
+    PAD_X, PAD_Y = 20, 35
+    CELL_W = int(TOTAL_NM_RANGE / NM_PER_PIXEL) 
+    CELL_H = 15
+    canvas_w = 10 * (CELL_W + PAD_X)
+    canvas_h = 8 * (CELL_H + PAD_Y)
+    aspect = canvas_h / canvas_w
+    
+    # Resize the window to full width (1400px) first
+    cv2.resizeWindow(GRID_WINDOW_NAME, 1400, int(1400 * aspect))
+    
+    # Grab initial slider values from the main window
+    initial_min = cv2.getTrackbarPos("Min(nm)", WINDOW_NAME)
+    initial_max = cv2.getTrackbarPos("Max(nm)", WINDOW_NAME)
+    
+    # 3. NOW create the trackbars on the large window
+    cv2.createTrackbar("Min(nm)", GRID_WINDOW_NAME, MIN_WAVE_LIMIT, MAX_WAVE_LIMIT, draw_grid_canvas)
+    cv2.createTrackbar("Max(nm)", GRID_WINDOW_NAME, MAX_WAVE_LIMIT, MAX_WAVE_LIMIT, draw_grid_canvas)
+    
+    # 4. Set their values
+    cv2.setTrackbarPos("Min(nm)", GRID_WINDOW_NAME, initial_min)
+    cv2.setTrackbarPos("Max(nm)", GRID_WINDOW_NAME, initial_max)
+    
+    # Trigger the first render
+    draw_grid_canvas(0)
 
 def update_view(*args):
     """Renders the dynamic blue lines that resize with the slider."""
@@ -297,15 +309,11 @@ def update_view(*args):
         cv2.setTrackbarPos("Min(nm)", WINDOW_NAME, max_nm - 1)
         min_nm = max_nm - 1
 
-    if target_img.dtype == np.uint16:
-        base = cv2.normalize(target_img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-    else:
-        base = target_img.copy()
-    display_img = cv2.cvtColor(base, cv2.COLOR_GRAY2BGR)
+    display_img = cv2.cvtColor(target_img_8u, cv2.COLOR_GRAY2BGR)
     
-    mask = np.ones(base.shape[:2], dtype=np.uint8) * 255
+    mask = np.ones(target_img_8u.shape[:2], dtype=np.uint8) * 255
     if hide_bg == 1:
-        mask = np.zeros(base.shape[:2], dtype=np.uint8)
+        mask = np.zeros(target_img_8u.shape[:2], dtype=np.uint8)
 
     for box in DISPERSIONS:
         tx1, ty1, tx2, ty2, ux, uy, length = get_true_endpoints(box)
@@ -314,9 +322,6 @@ def update_view(*args):
         start_nm, thickness = box['start_nm'], box['thickness']
         vx, vy = -uy, ux
         
-        # --- FLIPPED CROP MATH ---
-        # Because x1 is the highest wavelength (725), the distance to max_nm (e.g. 700) 
-        # is physically shorter than the distance to min_nm (e.g. 525).
         d_min_draw = max(0, min((start_nm - max_nm) / NM_PER_PIXEL, length))
         d_max_draw = max(0, min((start_nm - min_nm) / NM_PER_PIXEL, length))
         
@@ -334,8 +339,6 @@ def update_view(*args):
             if overlays == 1:
                 blue_color = (255, 150, 0)
                 cv2.line(display_img, (int(draw_x1), int(draw_y1)), (int(draw_x2), int(draw_y2)), blue_color, 1)
-                
-                # Pinned the ID text to the absolute start of the streak (tx1) so it doesn't move when cropping
                 cv2.putText(display_img, f"ID:{box['id']}", (int(tx1), int(ty1) - 8), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, blue_color, 1)
 
@@ -357,19 +360,26 @@ def update_view(*args):
     cv2.imshow(WINDOW_NAME, display_img)
 
 def main():
-    global target_img
-    
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes('-topmost', True)
+    global target_img, target_img_8u
     
     target_img = select_image("Select RAW Target Image")
     if target_img is None: return
 
-    h, w = target_img.shape[:2]
+    # Create the normalized 8-bit copy exactly once at startup to save processing time
+    if target_img.dtype == np.uint16:
+        target_img_8u = cv2.normalize(target_img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    else:
+        target_img_8u = target_img.copy()
 
-    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
-    cv2.resizeWindow(WINDOW_NAME, w, h)
+    # Apply Aspect Ratio Fix to Main UI Window
+    h, w = target_img.shape[:2]
+    aspect_ratio = h / w 
+    
+    display_width = 1200
+    display_height = int(display_width * aspect_ratio)
+
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(WINDOW_NAME, display_width, display_height)
     
     cv2.createTrackbar("Overlays", WINDOW_NAME, 1, 1, update_view)
     cv2.createTrackbar("Hide BG", WINDOW_NAME, 0, 1, update_view)
@@ -382,7 +392,7 @@ def main():
     
     print("--- HSIS Viewer Active ---")
     print("- LEFT CLICK near a blue line to see the spectral graph.")
-    print("- PRESS 'R' to generate the Reconstructed Image.")
+    print("- PRESS 'R' to generate the Visual Datacube Grid.")
     print("- PRESS 'ESC' to exit.")
     
     while True:
@@ -390,7 +400,7 @@ def main():
         if key == 27: 
             break
         elif key == ord('r') or key == ord('R'):
-            reconstruct_image()
+            reconstruct_grid()
             
     cv2.destroyAllWindows()
 
