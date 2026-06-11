@@ -19,30 +19,72 @@ INTEGRAL_SCALE = 500000.0
 
 # --- Manual Dispersion Map ---
 DISPERSIONS = [
-    {'id': 1, 'x1': 725, 'y1': 102, 'x2': 911, 'y2': 76, 'start_nm': 725, 'thickness': 3},
-    {'id': 2, 'x1': 705, 'y1': 120, 'x2': 857, 'y2': 98, 'start_nm': 725, 'thickness': 3},
-    {'id': 3, 'x1': 685, 'y1': 132, 'x2': 828, 'y2': 117, 'start_nm': 725, 'thickness': 3},
-    {'id': 4, 'x1': 665, 'y1': 146, 'x2': 828, 'y2': 134, 'start_nm': 725, 'thickness': 3},
-    {'id': 5, 'x1': 645, 'y1': 162, 'x2': 811, 'y2': 152, 'start_nm': 725, 'thickness': 3},
-    {'id': 6, 'x1': 625, 'y1': 178, 'x2': 754, 'y2': 169, 'start_nm': 725, 'thickness': 3},
-    {'id': 7, 'x1': 605, 'y1': 191, 'x2': 712, 'y2': 184, 'start_nm': 725, 'thickness': 3},
-    {'id': 8, 'x1': 585, 'y1': 207, 'x2': 701, 'y2': 197, 'start_nm': 725, 'thickness': 3},
+    {'id': 1, 'x1': 720, 'y1': 102, 'x2': 911, 'y2': 76, 'start_nm': 725, 'thickness': 3},
+    {'id': 2, 'x1': 700, 'y1': 120, 'x2': 857, 'y2': 98, 'start_nm': 725, 'thickness': 3},
+    {'id': 3, 'x1': 680, 'y1': 132, 'x2': 828, 'y2': 117, 'start_nm': 725, 'thickness': 3},
+    {'id': 4, 'x1': 660, 'y1': 146, 'x2': 828, 'y2': 134, 'start_nm': 725, 'thickness': 3},
+    {'id': 5, 'x1': 640, 'y1': 164, 'x2': 811, 'y2': 152, 'start_nm': 725, 'thickness': 3},
+    {'id': 6, 'x1': 620, 'y1': 178, 'x2': 754, 'y2': 169, 'start_nm': 725, 'thickness': 3},
+    {'id': 7, 'x1': 600, 'y1': 191, 'x2': 712, 'y2': 184, 'start_nm': 725, 'thickness': 3},
+    {'id': 8, 'x1': 580, 'y1': 207, 'x2': 701, 'y2': 197, 'start_nm': 725, 'thickness': 3},
+    {'id': 9, 'x1': 560, 'y1': 220, 'x2': 672, 'y2': 211, 'start_nm': 725, 'thickness': 3},
+    {'id': 10, 'x1': 540, 'y1': 230, 'x2': 672, 'y2': 220, 'start_nm': 725, 'thickness': 3},
 
     {'id': 11, 'x1': 655, 'y1': 256, 'x2': 790, 'y2': 241, 'start_nm': 725, 'thickness': 3},
     {'id': 12, 'x1': 635, 'y1': 270, 'x2': 790, 'y2': 256, 'start_nm': 725, 'thickness': 3},
     {'id': 13, 'x1': 615, 'y1': 284, 'x2': 790, 'y2': 271, 'start_nm': 725, 'thickness': 3},
-    {'id': 14, 'x1': 595, 'y1': 298, 'x2': 734, 'y2': 289, 'start_nm': 725, 'thickness': 3},
+    {'id': 14, 'x1': 595, 'y1': 300, 'x2': 734, 'y2': 289, 'start_nm': 725, 'thickness': 3},
     {'id': 15, 'x1': 575, 'y1': 312, 'x2': 737, 'y2': 302, 'start_nm': 725, 'thickness': 3},
     {'id': 16, 'x1': 555, 'y1': 322, 'x2': 698, 'y2': 314, 'start_nm': 725, 'thickness': 3},
     {'id': 17, 'x1': 535, 'y1': 335, 'x2': 694, 'y2': 325, 'start_nm': 725, 'thickness': 3},
     {'id': 18, 'x1': 515, 'y1': 350, 'x2': 690, 'y2': 340, 'start_nm': 725, 'thickness': 3},
 
-    {'id': 41, 'x1': 520, 'y1': 694, 'x2': 624, 'y2': 691, 'start_nm': 725, 'thickness': 3},
-    {'id': 42, 'x1': 540, 'y1': 685, 'x2': 626, 'y2': 682, 'start_nm': 725, 'thickness': 3},
+    {'id': 21, 'x1': 650, 'y1': 398, 'x2': 769, 'y2': 390, 'start_nm': 725, 'thickness': 5},
+    {'id': 22, 'x1': 630, 'y1': 412, 'x2': 747, 'y2': 403, 'start_nm': 725, 'thickness': 5},
+    {'id': 23, 'x1': 610, 'y1': 424, 'x2': 730, 'y2': 416, 'start_nm': 725, 'thickness': 5},
+    {'id': 24, 'x1': 590, 'y1': 435, 'x2': 699, 'y2': 429, 'start_nm': 725, 'thickness': 5},
+    {'id': 25, 'x1': 570, 'y1': 448, 'x2': 667, 'y2': 441, 'start_nm': 725, 'thickness': 5},
+    {'id': 26, 'x1': 550, 'y1': 458, 'x2': 659, 'y2': 451, 'start_nm': 725, 'thickness': 5},
+    {'id': 27, 'x1': 530, 'y1': 469, 'x2': 679, 'y2': 459, 'start_nm': 725, 'thickness': 5},
+    {'id': 28, 'x1': 510, 'y1': 479, 'x2': 672, 'y2': 471, 'start_nm': 725, 'thickness': 5},
+
+    {'id': 31, 'x1': 650, 'y1': 520, 'x2': 813, 'y2': 507, 'start_nm': 725, 'thickness': 5},
+    {'id': 32, 'x1': 630, 'y1': 535, 'x2': 801, 'y2': 520, 'start_nm': 725, 'thickness': 5},
+    {'id': 33, 'x1': 610, 'y1': 545, 'x2': 738, 'y2': 537, 'start_nm': 725, 'thickness': 5},
+    {'id': 34, 'x1': 590, 'y1': 556, 'x2': 707, 'y2': 550, 'start_nm': 725, 'thickness': 5},
+    {'id': 35, 'x1': 570, 'y1': 565, 'x2': 699, 'y2': 561, 'start_nm': 725, 'thickness': 5},
+    {'id': 36, 'x1': 550, 'y1': 576, 'x2': 679, 'y2': 570, 'start_nm': 725, 'thickness': 5},
+    {'id': 37, 'x1': 530, 'y1': 586, 'x2': 683, 'y2': 580, 'start_nm': 725, 'thickness': 5},
+    {'id': 38, 'x1': 510, 'y1': 594, 'x2': 654, 'y2': 592, 'start_nm': 725, 'thickness': 5},
+    {'id': 39, 'x1': 490, 'y1': 606, 'x2': 654, 'y2': 603, 'start_nm': 725, 'thickness': 5},
+
+    {'id': 45, 'x1': 520, 'y1': 694, 'x2': 624, 'y2': 691, 'start_nm': 725, 'thickness': 3},
+    {'id': 44, 'x1': 540, 'y1': 685, 'x2': 626, 'y2': 682, 'start_nm': 725, 'thickness': 3},
     {'id': 43, 'x1': 560, 'y1': 676, 'x2': 643, 'y2': 672, 'start_nm': 725, 'thickness': 3},
-    {'id': 44, 'x1': 580, 'y1': 666, 'x2': 670, 'y2': 662, 'start_nm': 725, 'thickness': 3},
-    {'id': 45, 'x1': 600, 'y1': 652, 'x2': 765, 'y2': 645, 'start_nm': 725, 'thickness': 3},
+    {'id': 42, 'x1': 580, 'y1': 666, 'x2': 670, 'y2': 662, 'start_nm': 725, 'thickness': 3},
+    {'id': 41, 'x1': 600, 'y1': 652, 'x2': 765, 'y2': 645, 'start_nm': 725, 'thickness': 3},
     {'id': 46, 'x1': 500, 'y1': 705, 'x2': 640, 'y2': 700, 'start_nm': 725, 'thickness': 3},
+    {'id': 47, 'x1': 480, 'y1': 716, 'x2': 640, 'y2': 710, 'start_nm': 725, 'thickness': 3},
+    {'id': 48, 'x1': 460, 'y1': 726, 'x2': 640, 'y2': 718, 'start_nm': 725, 'thickness': 3},
+
+    {'id': 51, 'x1': 660, 'y1': 762, 'x2': 797, 'y2': 757, 'start_nm': 725, 'thickness': 5},
+    {'id': 52, 'x1': 640, 'y1': 773, 'x2': 762, 'y2': 768, 'start_nm': 725, 'thickness': 5},
+    {'id': 53, 'x1': 620, 'y1': 783, 'x2': 745, 'y2': 778, 'start_nm': 725, 'thickness': 5},
+    {'id': 54, 'x1': 600, 'y1': 793, 'x2': 721, 'y2': 790, 'start_nm': 725, 'thickness': 5},
+    {'id': 55, 'x1': 580, 'y1': 802, 'x2': 699, 'y2': 799, 'start_nm': 725, 'thickness': 5},
+    {'id': 56, 'x1': 560, 'y1': 814, 'x2': 680, 'y2': 810, 'start_nm': 725, 'thickness': 5},
+    {'id': 57, 'x1': 540, 'y1': 823, 'x2': 669, 'y2': 818, 'start_nm': 725, 'thickness': 5},
+    {'id': 58, 'x1': 520, 'y1': 831, 'x2': 678, 'y2': 826, 'start_nm': 725, 'thickness': 5},
+    {'id': 59, 'x1': 500, 'y1': 841, 'x2': 650, 'y2': 835, 'start_nm': 725, 'thickness': 5},
+
+    {'id': 68, 'x1': 520, 'y1': 971, 'x2': 643, 'y2': 969, 'start_nm': 725, 'thickness': 5},
+    {'id': 67, 'x1': 540, 'y1': 958, 'x2': 644, 'y2': 958, 'start_nm': 725, 'thickness': 5},
+    {'id': 66, 'x1': 560, 'y1': 949, 'x2': 635, 'y2': 949, 'start_nm': 725, 'thickness': 5},
+    {'id': 65, 'x1': 580, 'y1': 938, 'x2': 633, 'y2': 939, 'start_nm': 725, 'thickness': 5},
+    {'id': 64, 'x1': 600, 'y1': 930, 'x2': 670, 'y2': 930, 'start_nm': 725, 'thickness': 5},
+    {'id': 63, 'x1': 620, 'y1': 922, 'x2': 702, 'y2': 920, 'start_nm': 725, 'thickness': 5},
+    {'id': 62, 'x1': 640, 'y1': 912, 'x2': 721, 'y2': 910, 'start_nm': 725, 'thickness': 5},
+    {'id': 61, 'x1': 660, 'y1': 902, 'x2': 722, 'y2': 901, 'start_nm': 725, 'thickness': 5},
 ]
 target_img = None
 target_img_8u = None # Added a cached 8-bit version of the image
@@ -157,6 +199,119 @@ def on_mouse_click(event, x, y, flags, param):
                 plt.grid(True)
                 plt.show() 
                 break
+
+def wavelength_to_bgr(wavelength):
+    """Mathematically converts a physical wavelength (nm) to an OpenCV BGR color tuple."""
+    w = float(wavelength)
+    
+    if w >= 380 and w < 440:
+        R = -(w - 440.) / (440. - 380.)
+        G = 0.0
+        B = 1.0
+    elif w >= 440 and w < 490:
+        R = 0.0
+        G = (w - 440.) / (490. - 440.)
+        B = 1.0
+    elif w >= 490 and w < 510:
+        R = 0.0
+        G = 1.0
+        B = -(w - 510.) / (510. - 490.)
+    elif w >= 510 and w < 580:
+        R = (w - 510.) / (580. - 510.)
+        G = 1.0
+        B = 0.0
+    elif w >= 580 and w < 645:
+        R = 1.0
+        G = -(w - 645.) / (645. - 580.)
+        B = 0.0
+    elif w >= 645 and w <= 780:
+        R = 1.0
+        G = 0.0
+        B = 0.0
+    else:
+        R = 0.0
+        G = 0.0
+        B = 0.0
+
+    # Intensity falloff near the limits of human vision
+    if w >= 380 and w < 420:
+        factor = 0.3 + 0.7*(w - 380.) / (420. - 380.)
+    elif w >= 420 and w < 700:
+        factor = 1.0
+    elif w >= 700 and w <= 780:
+        factor = 0.3 + 0.7*(780. - w) / (780. - 700.)
+    else:
+        factor = 0.0
+
+    def adjust(color, factor):
+        return int(round(max(0, 255 * (color * factor))))
+
+    # OpenCV uses BGR (Blue, Green, Red) instead of RGB!
+    return (adjust(B, factor), adjust(G, factor), adjust(R, factor))
+
+def find_laser_peaks():
+    """Locates the brightest physical dot in each dispersion and tags it dynamically."""
+    
+    # ==========================================
+    # SENSITIVITY CONTROL
+    # Minimum brightness (0-255) required to be considered a valid laser hit.
+    # Lower this number to detect dimmer lights. Raise it to ignore noise.
+    PEAK_THRESHOLD = 30 
+    # ==========================================
+    
+    print(f"\nLocating Laser Peaks (Sensitivity Threshold: {PEAK_THRESHOLD})...")
+    
+    display_img = cv2.cvtColor(target_img_8u, cv2.COLOR_GRAY2BGR)
+    hits_found = False
+    
+    print("-" * 35)
+    print(" DETECTED LASER PEAK WAVELENGTHS")
+    print("-" * 35)
+    
+    for box in DISPERSIONS:
+        wavelengths, intensities = extract_line_profile(box, target_img_8u)
+        if len(intensities) == 0: continue
+        
+        smoothed_ints = savgol_filter(intensities, window_length=15, polyorder=3)
+        peak_idx = np.argmax(smoothed_ints)
+        
+        # SENSITIVITY CHECK: Ignore the dot if it is dimmer than your threshold
+        if smoothed_ints[peak_idx] < PEAK_THRESHOLD: 
+            continue
+            
+        hits_found = True
+        peak_nm = wavelengths[peak_idx]
+        
+        # Get the actual real-world color for this specific wavelength!
+        dynamic_color = wavelength_to_bgr(peak_nm)
+        
+        tx1, ty1, tx2, ty2, ux, uy, length = get_true_endpoints(box)
+        peak_x = int(tx1 + ux * peak_idx)
+        peak_y = int(ty1 + uy * peak_idx)
+        
+        # Draw the crosshairs using the true dynamic color
+        cv2.circle(display_img, (peak_x, peak_y), 8, dynamic_color, 2)
+        cv2.circle(display_img, (peak_x, peak_y), 2, (255, 255, 255), -1)
+        
+        # Color the text label to match as well
+        label = f"ID {box['id']} ({peak_nm:.1f}nm)"
+        cv2.putText(display_img, label, (peak_x + 12, peak_y + 4), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, dynamic_color, 1)
+        
+        print(f"Pinhole ID {box['id']:02d} -> Peak Wavelength: {peak_nm:.1f} nm")
+
+    if not hits_found:
+        print("No active laser peaks detected above the noise floor.")
+        
+    print("-" * 35)
+    
+    ANALYSIS_WINDOW = "Laser Peak Calibration"
+    cv2.namedWindow(ANALYSIS_WINDOW, cv2.WINDOW_NORMAL)
+    
+    h, w = display_img.shape[:2]
+    aspect = h / w 
+    cv2.resizeWindow(ANALYSIS_WINDOW, 1200, int(1200 * aspect))
+    cv2.imshow(ANALYSIS_WINDOW, display_img)
 
 def draw_grid_canvas(*args):
     """Generates the grid, applies spacing, and auto-scales the window."""
@@ -393,6 +548,7 @@ def main():
     print("--- HSIS Viewer Active ---")
     print("- LEFT CLICK near a blue line to see the spectral graph.")
     print("- PRESS 'R' to generate the Visual Datacube Grid.")
+    print("- PRESS 'L' to locate and calculate laser peak wavelengths.")
     print("- PRESS 'ESC' to exit.")
     
     while True:
@@ -401,7 +557,9 @@ def main():
             break
         elif key == ord('r') or key == ord('R'):
             reconstruct_grid()
-            
+        elif key == ord('l') or key == ord('L'):
+            find_laser_peaks()
+
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
