@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HSIS Software Operations Manual</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm;
+            background-color: #f4f6f8; 
+        }
+        
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #2c3e50;
+            line-height: 1.6;
+            font-size: 11pt;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+        }
+
+        /* --- Header Styles --- */
+        .title-block {
+            background-color: #1a252f;
+            color: #ecf0f1;
+            padding: 30px 20px;
+            margin: 0 0 20px 0; 
+            border-bottom: 5px solid #3498db;
+        }
+
+        h1 {
+            font-size: 24pt;
+            margin: 0 0 10px 0;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 12pt;
+            color: #bdc3c7;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        h2 {
+            font-size: 16pt;
+            color: #2980b9;
+            border-left: 5px solid #2980b9;
+            padding-left: 10px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 13pt;
+            color: #34495e;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            page-break-after: avoid;
+        }
+
+        /* --- Content Styles --- */
+        p {
+            margin-bottom: 12px;
+        }
+
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #e2e6ea;
+            color: #c0392b;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 9.5pt;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            page-break-inside: avoid;
+            border-left: 4px solid #3498db;
+        }
+
+        .callout {
+            background-color: #ffffff;
+            border-left: 4px solid #e67e22;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            page-break-inside: avoid;
+        }
+        
+        .callout strong {
+            color: #d35400;
+        }
+
+        .hardware-box {
+            background-color: #e8f4f8;
+            border: 1px solid #bce0ee;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 10.5pt;
+        }
+
+        .repo-box {
+            background-color: #fdf2e9;
+            border: 1px solid #f5b041;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 10.5pt;
+        }
+        
+        .repo-box a {
+            color: #d35400;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .module-section {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin-bottom: 30px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="title-block">
+        <h1>Hyperspectral Imaging System (HSIS)</h1>
+        <div class="subtitle">Software Operations & Engineering Manual</div>
+    </div>
+
+    <p>This document details the configuration, deployment, and operation of the three core software modules driving the Hyperspectral Imaging System (HSIS). The software suite is split into headless flight operations, live ground testing, and offline spectral analysis.</p>
+
+    <div class="repo-box">
+        <strong>Source Code & Version Control:</strong><br>
+        This software architecture is actively maintained and updated. For the latest code commits, bug fixes, or to contribute to the project, visit the official repository:<br><br>
+        <a href="https://github.com/LykanHypersport77/XCLIB-with-Jetson" target="_blank">🔗 github.com/LykanHypersport77/XCLIB-with-Jetson</a>
+    </div>
+
+    <div class="hardware-box">
+        <strong>Target Hardware Environment:</strong>
+        <ul>
+            <li><strong>Flight Computer:</strong> NVIDIA Jetson (ARM64) running Ubuntu / JetPack.</li>
+            <li><strong>Camera System:</strong> Raptor Hawk (1944 x 1472 resolution, 12-bit native sensor depth).</li>
+            <li><strong>Frame Grabber:</strong> EPIX PIXCI Frame Grabber utilizing XCLIB/XCAP libraries.</li>
+            <li><strong>Ground Station:</strong> Windows 10/11 Lab Laptop (1080p display with DPI scaling handled automatically).</li>
+        </ul>
+    </div>
+
+    <div class="module-section">
+        <h2>Module 1: Automated Flight Capture (<code>auto_capture.py</code>)</h2>
+        <p><strong>Environment:</strong> NVIDIA Jetson (Offline, In-Flight)</p>
+        <p>The Flight Capture script is designed as a headless, deeply embedded routine. Its sole purpose is to initialize the camera, catch 12-bit TIFF frames over the PCIe lane, and flush them directly to the storage drive as fast as possible. This process is strictly I/O bound.</p>
+
+        <h3>Key Engineering Features</h3>
+        <ul>
+            <li><strong>Zero External Dependencies:</strong> Built entirely using the Python Standard Library (<code>ctypes</code>, <code>time</code>, <code>os</code>). It requires absolutely no <code>pip</code> installations and runs natively on a fresh Jetson flash.</li>
+            <li><strong>Headless Execution:</strong> Designed to be launched automatically by Ubuntu's <code>systemd</code> upon power-up, requiring no display or user interaction.</li>
+        </ul>
+
+        <div class="callout">
+            <strong>⚠️ CRITICAL THERMAL WARNING: Jetson Power Mode</strong><br>
+            Do <strong>not</strong> fly the Jetson in <code>MAXN</code> mode. MAXN powers all GPU cores and generates immense heat, which will cause a thermal shutdown inside a sealed reentry enclosure. Because the flight script utilizes 0% of the GPU, you must set the Jetson to <strong>15W Mode</strong> (e.g., <code>MODE_15W_6CORE</code>). This allocates maximum clock speed to the CPU cores handling disk I/O while keeping thermals manageable.
+        </div>
+
+        <h3>Systemd Service Management</h3>
+        <p>The capture script runs as a background daemon. To configure it for flight, you must manage it via the Ubuntu terminal.</p>
+        
+        <p><strong>1. To Enable & Start for Flight:</strong></p>
+        <p>This command arms the payload. It tells the Jetson to launch the script automatically the moment it boots up.</p>
+        <pre>sudo systemctl enable hsis_capture.service
+sudo systemctl start hsis_capture.service</pre>
+
+        <p><strong>2. To Disable & Stop for Ground Testing:</strong></p>
+        <p><em>Note: You must run these commands to stop the background capture loop before using the Ground Test GUI, otherwise the EPIX Frame Grabber will throw a "Device Busy" error!</em></p>
+        <pre>sudo systemctl stop hsis_capture.service
+sudo systemctl disable hsis_capture.service</pre>
+
+        <p><strong>3. To Monitor Service Health:</strong></p>
+        <p>If you need to verify the script is successfully catching frames and saving TIFFs, view the live terminal output via the journal system:</p>
+        <pre>sudo systemctl status hsis_capture.service
+# Or to watch a live feed of the outputs:
+sudo journalctl -u hsis_capture.service -f</pre>
+    </div>
+
+    <div class="module-section">
+        <h2>Module 2: Ground Test GUI (<code>ground_test.py</code>)</h2>
+        <p><strong>Environment:</strong> NVIDIA Jetson (Bench Testing with Monitor) or Lab Laptop</p>
+        <p>The Ground Test script provides a live graphical interface to verify camera focus, pinhole alignment, and laser calibration before sealing the payload for flight.</p>
+
+        <h3>Key Engineering Features</h3>
+        <ul>
+            <li><strong>Real-Time Visualization:</strong> Captures and scales the raw 12-bit sensor data into an 8-bit viewable window using Tkinter and Pillow (PIL).</li>
+            <li><strong>15W Desktop Mode Compatibility:</strong> For GUI rendering on the Jetson, utilize the "15W Desktop" power profile to prevent UI stuttering, as it keeps more cores active for background display management.</li>
+        </ul>
+
+        <h3>Installation Requirements (Jetson)</h3>
+        <p>Because this script uses UI libraries, it requires specific packages. If the Jetson is offline, bridge an internet connection via Ethernet from your laptop.</p>
+        <pre>sudo apt update
+sudo apt install python3-pip python3-tk
+pip3 install Pillow numpy</pre>
+
+        <h3>Usage</h3>
+        <ol>
+            <li>Connect a monitor, mouse, and keyboard to the Jetson.</li>
+            <li>Execute the script: <code>python3 ground_test.py</code>.</li>
+            <li>Use the Tkinter UI to manually trigger exposures, adjust lighting, and verify that the dispersion streaks are properly aligning with the sensor's physical pixels.</li>
+        </ol>
+    </div>
+
+    <div class="module-section">
+        <h2>Module 3: Post-Flight Analysis (<code>postanalysis.py</code>)</h2>
+        <p><strong>Environment:</strong> Windows 10/11 Lab Laptop</p>
+        <p>The Post-Flight Analysis suite is the core data-processing engine. It extracts specific dispersion streaks from the raw flight TIFFs, corrects complex optical shear, and maps the integrated spectral data back into an interactive, spatial 2D representation of the pinhole array.</p>
+
+        <h3>Key Engineering Features</h3>
+        <ul>
+            <li><strong>Sub-Pixel Vector Sampling:</strong> Straightens optical dispersion shear by mathematically casting a centerline vector and sampling pixels perpendicularly, preventing division-by-zero errors on highly horizontal streaks.</li>
+            <li><strong>Live Spaced Datacube Grid:</strong> Utilizes a decoupled "Two-Step Pipeline." Step 1 runs the core physics math to extract the 1:1 sensor data. Step 2 slices the optical data and layouts it into a padded, perfectly spaced 8x10 grid. Any blocked/shadowed pinholes render as pitch-black cells, visually recreating the physical shadow of the captured target.</li>
+            <li><strong>Laser Auto-Calibration:</strong> A dedicated calibration tool runs a Savitzky-Golay peak detection filter across all dispersions to find the true laser dot while ignoring CMOS read noise. It instantly tags the dot with its calculated physical wavelength and colors the targeting crosshair using a dynamic Wavelength-to-RGB algorithm.</li>
+            <li><strong>Dynamic Digital Bandpass:</strong> Auto-scaling, independent UI trackbars allow live cropping of the physical spatial slices, simulating a tunable bandpass filter.</li>
+        </ul>
+
+        <h3>Installation Requirements (Windows Laptop)</h3>
+        <p>Open the Command Prompt and run:</p>
+        <pre>winget install Python.Python.3.11
+# Restart Command Prompt, then run:
+pip install opencv-python numpy matplotlib scipy</pre>
+
+        <h3>Interactive UI & Usage</h3>
+        <ol>
+            <li>Run the script: <code>python postanalysis.py</code>. A secure Windows file dialog will prompt you to select the raw `.tif` flight image.</li>
+            <li><strong>Main Interface (RAW View):</strong> The image loads with dynamic blue tracking lines overlaying the defined dispersion streaks.</li>
+            <li><strong>Spectrum Graphing:</strong> <strong>Left-Click</strong> near any blue tracking line. A Matplotlib window will spawn, plotting the raw 1D sensor data alongside the smoothed red curve for accurate SNR reading.</li>
+            <li><strong>Visual Datacube (R Key):</strong> Press <strong>'R'</strong>. A massive, padded 8x10 grid will generate, showing the unwarped, 1:1 raw sensor slices mapped to their physical pinhole locations. Adjust the trackbars to slide a visual mask across the wavelengths live.</li>
+            <li><strong>Laser Peak Calibration (L Key):</strong> Press <strong>'L'</strong>. A new window will overlay bright crosshairs directly onto the highest-intensity pixel of each dispersion, tagged with the true nanometer wavelength and logged to the terminal.</li>
+        </ol>
+
+    </div>
+
+</body>
+</html>
