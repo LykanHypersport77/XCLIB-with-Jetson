@@ -141,6 +141,36 @@
             text-decoration: none;
         }
 
+        /* --- NEW CREDENTIALS BOX --- */
+        .credentials-box {
+            background-color: #eaf2f8;
+            border: 1px solid #a9cce3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 10.5pt;
+        }
+        
+        .credentials-box strong {
+            color: #2980b9;
+        }
+
+        .quick-start-box {
+            background: #ffffff;
+            border-left: 5px solid #2ecc71;
+            padding: 25px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        
+        .quick-start-box h2 {
+            color: #27ae60;
+            border-left: none;
+            padding-left: 0;
+            margin-top: 0;
+        }
+
         .module-section {
             background: #ffffff;
             padding: 25px;
@@ -160,6 +190,11 @@
 
     <p>This document details the configuration, deployment, and operation of the three core software modules driving the Hyperspectral Imaging System (HSIS). The software suite is split into headless flight operations, live ground testing, and offline spectral analysis.</p>
 
+    <div class="credentials-box">
+        <strong>System Access Credentials:</strong><br>
+        The universal password for both the Jetson flight computer and the Windows Lab Laptop is: <code>SpectralEnergies</code>
+    </div>
+
     <div class="repo-box">
         <strong>Source Code & Version Control:</strong><br>
         This software architecture is actively maintained and updated. For the latest code commits, bug fixes, or to contribute to the project, visit the official repository:<br><br>
@@ -174,6 +209,29 @@
             <li><strong>Frame Grabber:</strong> EPIX PIXCI Frame Grabber utilizing XCLIB/XCAP libraries.</li>
             <li><strong>Ground Station:</strong> Windows 10/11 Lab Laptop (1080p display with DPI scaling handled automatically).</li>
         </ul>
+    </div>
+
+    <div class="quick-start-box">
+        <h2>Quick Start: Bench Setup & Ground Testing</h2>
+        <p>If you are setting up the system for the first time or performing bench tests, follow these steps to initialize the hardware and launch the live Ground Test GUI.</p>
+        
+        <h3>1. Hardware Connections</h3>
+        <ol>
+            <li><strong>Camera Power:</strong> Connect the 12V power supply to the Raptor Hawk camera.</li>
+            <li><strong>Data Link:</strong> Connect the Camera Link cable from the Raptor Hawk directly into the EPIX PIXCI frame grabber port on the Jetson.</li>
+            <li><strong>Compute Power:</strong> Connect the power supply to the NVIDIA Jetson and turn on the system. Ensure a monitor, keyboard, and mouse are connected.</li>
+        </ol>
+
+        <h3>2. Launching the GUI</h3>
+        <p>Open a terminal on the Jetson. Because the automated flight capture service starts on boot, you must explicitly stop it to release the camera before opening the GUI.</p>
+        <pre># 1. Stop the background flight daemon
+sudo systemctl stop raptor.service
+
+# 2. Navigate to the working directory (All pictures are located in this directory)
+cd ~/spectral/downloads/xclib
+
+# 3. Launch the Ground Test interface
+python3 ground_test.py</pre>
     </div>
 
     <div class="module-section">
@@ -193,23 +251,23 @@
         </div>
 
         <h3>Systemd Service Management</h3>
-        <p>The capture script runs as a background daemon. To configure it for flight, you must manage it via the Ubuntu terminal.</p>
+        <p>The capture script runs as a background daemon. To configure it for flight or testing, manage it via the Ubuntu terminal.</p>
         
         <p><strong>1. To Enable & Start for Flight:</strong></p>
         <p>This command arms the payload. It tells the Jetson to launch the script automatically the moment it boots up.</p>
-        <pre>sudo systemctl enable hsis_capture.service
-sudo systemctl start hsis_capture.service</pre>
+        <pre>sudo systemctl enable raptor.service
+sudo systemctl start raptor.service</pre>
 
-        <p><strong>2. To Disable & Stop for Ground Testing:</strong></p>
+        <p><strong>2. To Stop & Disable for Ground Testing:</strong></p>
         <p><em>Note: You must run these commands to stop the background capture loop before using the Ground Test GUI, otherwise the EPIX Frame Grabber will throw a "Device Busy" error!</em></p>
-        <pre>sudo systemctl stop hsis_capture.service
-sudo systemctl disable hsis_capture.service</pre>
+        <pre>sudo systemctl stop raptor.service
+sudo systemctl disable raptor.service</pre>
 
         <p><strong>3. To Monitor Service Health:</strong></p>
         <p>If you need to verify the script is successfully catching frames and saving TIFFs, view the live terminal output via the journal system:</p>
-        <pre>sudo systemctl status hsis_capture.service
+        <pre>sudo systemctl status raptor.service
 # Or to watch a live feed of the outputs:
-sudo journalctl -u hsis_capture.service -f</pre>
+sudo journalctl -u raptor.service -f</pre>
     </div>
 
     <div class="module-section">
@@ -220,7 +278,7 @@ sudo journalctl -u hsis_capture.service -f</pre>
         <h3>Key Engineering Features</h3>
         <ul>
             <li><strong>Real-Time Visualization:</strong> Captures and scales the raw 12-bit sensor data into an 8-bit viewable window using Tkinter and Pillow (PIL).</li>
-            <li><strong>15W Desktop Mode Compatibility:</strong> For GUI rendering on the Jetson, utilize the "15W Desktop" power profile to prevent UI stuttering, as it keeps more cores active for background display management.</li>
+            <li><strong>30W Desktop Mode Compatibility:</strong> For GUI rendering on the Jetson, utilize the "30W Desktop" power profile to prevent UI stuttering, as it keeps more cores active for background display management.</li>
         </ul>
 
         <h3>Installation Requirements (Jetson)</h3>
@@ -229,12 +287,6 @@ sudo journalctl -u hsis_capture.service -f</pre>
 sudo apt install python3-pip python3-tk
 pip3 install Pillow numpy</pre>
 
-        <h3>Usage</h3>
-        <ol>
-            <li>Connect a monitor, mouse, and keyboard to the Jetson.</li>
-            <li>Execute the script: <code>python3 ground_test.py</code>.</li>
-            <li>Use the Tkinter UI to manually trigger exposures, adjust lighting, and verify that the dispersion streaks are properly aligning with the sensor's physical pixels.</li>
-        </ol>
     </div>
 
     <div class="module-section">
